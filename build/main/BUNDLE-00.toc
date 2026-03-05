@@ -1,3 +1,0 @@
-([('main',
-   '/Users/macbook/Desktop/python_project/TestKIPiA/dist/main',
-   'EXECUTABLE')],)
