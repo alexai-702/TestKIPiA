@@ -1,0 +1,4 @@
+numpy==1.26.4
+PyMuPDF==1.23.22
+PyQt6==6.6.1
+pyinstaller==6.4.0
