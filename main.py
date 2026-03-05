@@ -11,6 +11,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 
 # Импорты для работы с PDF и OCR
+# df[
 try:
     import fitz  # PyMuPDF
     from PIL import Image
