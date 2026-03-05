@@ -1,0 +1,32 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install pyinstaller
+        pip install -r requirements.txt
+
+    - name: Build exe
+      run: |
+        pyinstaller --onefile --windowed --icon=icon.ico --add-data "data;data" main.py
+
+    - name: Upload exe
+      uses: actions/upload-artifact@v4
+      with:
+        name: program
+        path: dist/main.exe
