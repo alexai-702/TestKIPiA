@@ -3,6 +3,7 @@ name: Build Windows EXE
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,10 +21,11 @@ jobs:
       run: |
         pip install pyinstaller
         pip install -r requirements.txt
+        pip install PyQt6 PyQt6-sip
 
     - name: Build exe
       run: |
-        pyinstaller --onefile --windowed --icon=icon.ico --add-data "data;data" main.py
+        pyinstaller --onefile --windowed --icon=icon.ico --add-data "data;data" --hidden-import=PyQt6.sip main.py
 
     - name: Upload exe
       uses: actions/upload-artifact@v4
