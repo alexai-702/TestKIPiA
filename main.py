@@ -65,7 +65,19 @@ def load_available_tests():
         'птбт1' : 'ptbt1.json',
         'птбт2' : 'ptbt2.json',
         'птбт3' : 'ptbt3.json',
-        'птбт4' : 'ptbt4.json'
+        'птбт4' : 'ptbt4.json',
+        'ПТЭ_1_1':'PTU_1_1.json',
+        'ПТЭ_1_2': 'PTU_1_2.json',
+        'ПТЭ_1_3': 'PTU_1_3.json',
+        'ПТЭ_1':'ПТЭ_1.json',
+        'ОТ_1':'ОТ_1.json',
+        'ОТ_1_1':'ОТ_1_1.json',
+        'ОТ_1_2':'ОТ_1_2.json',
+        'ОТ_1_3':'ОТ_1_3.json',
+        'ОТ_1_4':'ОТ_1_4.json',
+        'ППБ':'ППБ_1.json',
+        'ППБ_1':'ППБ_1.json',
+        'ППБ_2':'ППБ_2.json',
     }
 
     # Загружаем пользовательские тесты
@@ -1154,14 +1166,36 @@ class MainWindow(QMainWindow):
         """)
         test_selection_layout.addWidget(test_label)
 
-        self.test_buttons_container = QWidget()
-        self.test_buttons_layout = QHBoxLayout(self.test_buttons_container)
-        self.test_buttons_layout.setContentsMargins(50, 0, 50, 10)
-
         self.test_buttons = {}
-        self.test_buttons_layout.addWidget(QLabel("Загрузка тестов..."))
+        self.test_combo = QComboBox()
+        self.test_combo.setMinimumHeight(40)
+        self.test_combo.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.test_combo.setMaxVisibleItems(15)
+        self.test_combo.setStyleSheet("""
+            QComboBox {
+                background-color: white;
+                color: #2c3e50;
+                border: 2px solid #3498db;
+                border-radius: 8px;
+                padding: 8px 15px;
+                margin: 0px 50px 10px 50px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QComboBox:hover {
+                border-color: #2980b9;
+            }
+            QComboBox QAbstractItemView {
+                background-color: white;
+                color: #2c3e50;
+                selection-background-color: #3498db;
+                selection-color: white;
+                font-size: 14px;
+            }
+        """)
+        self.test_combo.activated.connect(self.on_test_combo_activated)
 
-        test_selection_layout.addWidget(self.test_buttons_container)
+        test_selection_layout.addWidget(self.test_combo)
         layout.addLayout(test_selection_layout)
 
         self.test_info_card = QuestionCard()
@@ -1198,47 +1232,37 @@ class MainWindow(QMainWindow):
         self.stacked_widget.addWidget(self.menu_page)
 
     def update_test_buttons(self):
-        while self.test_buttons_layout.count():
-            item = self.test_buttons_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
-        self.test_buttons = {}
+        """Заполнить выпадающий список тестов (имя метода сохранено для совместимости)"""
+        self.test_combo.blockSignals(True)
+        self.test_combo.clear()
 
         for test_name in self.available_tests.keys():
-            btn = ModernButton(test_name)
-            btn.clicked.connect(lambda checked, tn=test_name: self.load_test(tn))
+            self.test_combo.addItem(test_name, test_name)
 
-            if test_name == self.current_test_name:
-                btn.setStyleSheet("""
-                    QPushButton {
-                        background-color: #3498db;
-                        color: white;
-                        padding: 10px 20px;
-                        margin: 5px;
-                        font-size: 14px;
-                        font-weight: bold;
-                    }
-                    QPushButton:hover {
-                        background-color: #2980b9;
-                    }
-                """)
-            else:
-                btn.setStyleSheet("""
-                    QPushButton {
-                        background-color: #ecf0f1;
-                        color: #2c3e50;
-                        padding: 10px 20px;
-                        margin: 5px;
-                        font-size: 14px;
-                    }
-                    QPushButton:hover {
-                        background-color: #d5dbdb;
-                    }
-                """)
+        self.test_buttons = dict(self.available_tests)
+        self.sync_test_combo()
+        self.test_combo.blockSignals(False)
 
-            self.test_buttons_layout.addWidget(btn)
-            self.test_buttons[test_name] = btn
+    def sync_test_combo(self):
+        """Выставить в списке текущий загруженный тест"""
+        if not hasattr(self, 'test_combo'):
+            return
+        self.test_combo.blockSignals(True)
+        if self.current_test_name:
+            idx = self.test_combo.findData(self.current_test_name)
+            if idx >= 0:
+                self.test_combo.setCurrentIndex(idx)
+        else:
+            self.test_combo.setCurrentIndex(-1)
+        self.test_combo.blockSignals(False)
+
+    def on_test_combo_activated(self, index):
+        test_name = self.test_combo.itemData(index)
+        if not test_name or test_name == self.current_test_name:
+            return
+        self.load_test(test_name, silent=True)
+        # если загрузка не удалась - вернуть выбор на прежний тест
+        self.sync_test_combo()
 
     def update_test_info(self):
         if not hasattr(self, 'test_info_label'):
@@ -1268,8 +1292,11 @@ class MainWindow(QMainWindow):
             else:
                 self.menu_error_label.setText("✅ Нет ошибок")
 
-        if not self.test_buttons and hasattr(self, 'test_buttons_layout'):
-            self.update_test_buttons()
+        if hasattr(self, 'test_combo'):
+            if self.test_combo.count() == 0 and self.available_tests:
+                self.update_test_buttons()
+            else:
+                self.sync_test_combo()
 
     def create_test_page(self):
         self.test_page = QWidget()
